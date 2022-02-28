@@ -116,6 +116,22 @@ u-boot-spl-ddr4.bin: u-boot-spl.bin $(ddr4_imem_1d) $(ddr4_dmem_1d) $(ddr4_imem_
 	@cat u-boot-spl-pad.bin ddr4_1d_fw.bin ddr4_2d_fw.bin > u-boot-spl-ddr4.bin
 	@rm -f u-boot-spl-pad.bin ddr4_1d_fw.bin ddr4_2d_fw.bin ddr4_imem_1d_pad.bin ddr4_dmem_1d_pad.bin ddr4_imem_2d_pad.bin
 
+u-boot-spl-lpddr4-ddr4.bin: u-boot-spl.bin lpddr4_pmu_train_1d_imem.bin lpddr4_pmu_train_1d_dmem.bin lpddr4_pmu_train_2d_imem.bin lpddr4_pmu_train_2d_dmem.bin $(ddr4_imem_1d) $(ddr4_dmem_1d) $(ddr4_imem_2d) $(ddr4_dmem_2d)
+	@objcopy -I binary -O binary --pad-to 0x8000 --gap-fill=0x0 lpddr4_pmu_train_1d_imem.bin lpddr4_pmu_train_1d_imem_pad.bin
+	@objcopy -I binary -O binary --pad-to 0x1000 --gap-fill=0x0 lpddr4_pmu_train_1d_dmem.bin lpddr4_pmu_train_1d_dmem_pad.bin
+	@objcopy -I binary -O binary --pad-to 0x8000 --gap-fill=0x0 lpddr4_pmu_train_2d_imem.bin lpddr4_pmu_train_2d_imem_pad.bin
+	@objcopy -I binary -O binary --pad-to 0x1000 --gap-fill=0x0 lpddr4_pmu_train_2d_dmem.bin lpddr4_pmu_train_2d_dmem_pad.bin
+	@cat lpddr4_pmu_train_1d_imem_pad.bin lpddr4_pmu_train_1d_dmem_pad.bin > lpddr4_pmu_train_1d_fw.bin
+	@cat lpddr4_pmu_train_2d_imem_pad.bin lpddr4_pmu_train_2d_dmem_pad.bin > lpddr4_pmu_train_2d_fw.bin
+	@objcopy -I binary -O binary --pad-to 0x8000 --gap-fill=0x0 $(ddr4_imem_1d) ddr4_imem_1d_pad.bin
+	dd if=$(ddr4_dmem_1d) of=ddr4_dmem_1d_pad.bin bs=1K count=4
+	@objcopy -I binary -O binary --pad-to 0x8000 --gap-fill=0x0 $(ddr4_imem_2d) ddr4_imem_2d_pad.bin
+	@cat ddr4_imem_1d_pad.bin ddr4_dmem_1d_pad.bin > ddr4_1d_fw.bin
+	@cat ddr4_imem_2d_pad.bin ddr4_dmem_2d.bin > ddr4_2d_fw.bin
+	@cat u-boot-spl.bin lpddr4_pmu_train_1d_fw.bin lpddr4_pmu_train_2d_fw.bin ddr4_1d_fw.bin ddr4_2d_fw.bin > u-boot-spl-lpddr4-ddr4.bin
+	@rm -f ddr4_1d_fw.bin ddr4_2d_fw.bin ddr4_imem_1d_pad.bin ddr4_dmem_1d_pad.bin ddr4_imem_2d_pad.bin lpddr4_pmu_train_1d_fw.bin lpddr4_pmu_train_2d_fw.bin lpddr4_pmu_train_1d_imem_pad.bin lpddr4_pmu_train_1d_dmem_pad.bin lpddr4_pmu_train_2d_imem_pad.bin lpddr4_pmu_train_2d_dmem_pad.bin
+
+
 ddr3_imem_1d = ddr3_imem_1d$(DDR_FW_VERSION).bin
 ddr3_dmem_1d = ddr3_dmem_1d$(DDR_FW_VERSION).bin
 
@@ -148,6 +164,16 @@ u-boot.itb: $(dtb)
 	DEK_BLOB_LOAD_ADDR=$(DEK_BLOB_LOAD_ADDR) TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) ./mkimage_fit_atf.sh $(dtb) > u-boot.its
 	./mkimage_uboot -E -p 0x3000 -f u-boot.its u-boot.itb
 	@rm -f u-boot.its $(dtb)
+
+dtbs_lpddr4_ddr4_evk ?= $(dtbs)
+u-boot-lpddr4-ddr4-evk.itb: $(dtbs_lpddr4_ddr4_evk)
+	./$(PAD_IMAGE) tee.bin
+	./$(PAD_IMAGE) bl31.bin
+	./$(PAD_IMAGE) u-boot-nodtb.bin $(dtbs_lpddr4_ddr4_evk)
+	DEK_BLOB_LOAD_ADDR=$(DEK_BLOB_LOAD_ADDR) TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) ./mkimage_fit_atf.sh $(dtbs_lpddr4_ddr4_evk) > u-boot-lpddr4-ddr4-evk.its
+	./mkimage_uboot -E -p 0x3000 -f u-boot-lpddr4-ddr4-evk.its u-boot-lpddr4-ddr4-evk.itb
+	@rm -f $(dtbs_lpddr4_ddr4_evk)
+
 
 dtb_ddr3l = valddr3l.dtb
 $(dtb_ddr3l):
@@ -224,6 +250,8 @@ flash_evk_emmc_fastboot: flash_evk_no_hdmi_emmc_fastboot
 
 flash_ddr4_evk: flash_ddr4_evk_no_hdmi
 
+flash_lpddr4_ddr4_evk: flash_lpddr4_ddr4_evk_no_hdmi
+
 flash_ddr3l_evk: flash_ddr3l_evk_no_hdmi
 
 flash_ddr3l_val: flash_ddr3l_val_no_hdmi
@@ -269,6 +297,9 @@ flash_ddr3l_evk_flexspi: $(MKIMG) u-boot-spl-ddr3l.bin u-boot-ddr3l-evk.itb
 flash_ddr4_evk_flexspi: $(MKIMG) u-boot-spl-ddr4.bin u-boot-ddr4-evk.itb
 	./mkimage_imx8 -version $(VERSION) -dev flexspi -fit -loader u-boot-spl-ddr4.bin $(SPL_FSPI_LOAD_ADDR) -second_loader u-boot-ddr4-evk.itb 0x40200000 0x60000 -out $(OUTIMG)
 	./$(QSPI_PACKER) $(QSPI_HEADER)
+
+flash_lpddr4_ddr4_evk_no_hdmi: $(MKIMG) u-boot-spl-lpddr4-ddr4.bin u-boot-lpddr4-ddr4-evk.itb
+	./mkimage_imx8 -version $(VERSION) -fit -loader u-boot-spl-lpddr4-ddr4.bin $(SPL_LOAD_ADDR) -second_loader u-boot-lpddr4-ddr4-evk.itb 0x40200000 0x60000 -out $(OUTIMG)
 
 flash_hdmi_spl_uboot: flash_evk
 
