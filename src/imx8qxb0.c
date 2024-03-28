@@ -220,13 +220,14 @@ close:
 }
 
 static void set_imx_hdr_v3(imx_header_v3_t *imxhdr, uint32_t dcd_len,
-		uint32_t flash_offset, uint32_t hdr_base, uint32_t cont_id)
+		uint32_t flash_offset, uint32_t hdr_base, uint32_t cont_id,
+		uint8_t cntr_version)
 {
 	flash_header_v3_t *fhdr_v3 = &imxhdr->fhdr[cont_id];
 
 	/* Set magic number */
 	fhdr_v3->tag = IVT_HEADER_TAG_B0;
-	fhdr_v3->version = IVT_VERSION_B0;
+	fhdr_v3->version = cntr_version == 0x2 ? 0x2 : IVT_VERSION_B0;
 }
 
 void set_image_hash(boot_img_t *img, char *filename, uint32_t hash_type)
@@ -447,8 +448,14 @@ void set_image_array_entry(flash_header_v3_t *container, soc_type_t soc,
 	img->offset = offset;  /* Is re-adjusted later */
 	img->size = size;
 
-	if (type != DUMMY_V2X) { /* skip hash generation here if dummy image */
+	/* skip hash generation here if dummy image */
+	switch (type) {
+	case DUMMY_V2X:
+	case DUMMY_DDR:
+		break;
+	default:
 		set_image_hash(img, tmp_filename, get_hash_algo(images_hash));
+		break;
 	}
 
 	switch(type) {
@@ -476,7 +483,11 @@ void set_image_array_entry(flash_header_v3_t *container, soc_type_t soc,
 		tmp_name = "SENTINEL";
 		img->dst = 0XE7FE8000; /* S400 IRAM base */
 		img->entry = 0XE7FE8000;
-
+		break;
+	case DUMMY_DDR:
+		img->hab_flags |= IMG_TYPE_DDR_DUMMY;
+		tmp_name = "DDR Dummy";
+		img->size = 0; /* dummy image has no size */
 		break;
 	case OEI:
 		if (soc != IMX9) {
@@ -488,7 +499,6 @@ void set_image_array_entry(flash_header_v3_t *container, soc_type_t soc,
 		if (core == CORE_CM4_0) {
 			img->hab_flags |= CORE_ULP_CM33 << BOOT_IMG_FLAGS_CORE_SHIFT;
 			meta = CORE_IMX95_M33P;
-
 		} else {
 			img->hab_flags |= CORE_ULP_CA35 << BOOT_IMG_FLAGS_CORE_SHIFT;
 			meta = CORE_IMX95_A55C0;
@@ -498,6 +508,15 @@ void set_image_array_entry(flash_header_v3_t *container, soc_type_t soc,
 		img->entry = entry;
 		img->meta = meta;
 		custom_partition = 0;
+
+		if (container->num_images) {
+			/* if at least 2 images in container, [0] and [1] */
+			boot_img_t *ddr_dummy = &container->img[container->num_images - 1];
+			if ((ddr_dummy->hab_flags & 0x0F) == IMG_TYPE_DDR_DUMMY) {
+				ddr_dummy->offset = img->offset + img->size;
+				set_image_hash(ddr_dummy, "/dev/null", IMAGE_HASH_ALGO_DEFAULT);
+			}
+		}
 		break;
 	case AP:
 		if ((soc == QX || soc == DXL) && core == CORE_CA35)
@@ -530,9 +549,16 @@ void set_image_array_entry(flash_header_v3_t *container, soc_type_t soc,
 			fprintf(stderr, "\n\nWarning: M7 only in i.MX95\n\n");
 			exit(EXIT_FAILURE);
 		}
-		core = CORE_M7_0;
+		if (core == 0) {
+			core = CORE_M7_0;
+			meta = CORE_IMX95_M7P;
+		} else {
+			core = CORE_M7_1;
+			/* M7_1 core index is 0x7 on i.MX943 */
+			meta = 0x7;
+		}
+
 		/* TODO:  meta setting may change for SoCs other than MX95 */
-		meta = CORE_IMX95_M7P;
 		img->hab_flags |= IMG_TYPE_EXEC;
 		img->hab_flags |= core << BOOT_IMG_FLAGS_CORE_SHIFT;
 		tmp_name = "M7";
@@ -549,7 +575,15 @@ void set_image_array_entry(flash_header_v3_t *container, soc_type_t soc,
 		custom_partition = 0;
 		break;
 	case M4:
-		if ((soc == ULP) || (soc == IMX9)) {
+		if (soc == IMX9) {
+			if (core == 0) {
+				core = CORE_ULP_CM33;
+				meta = CORE_IMX95_M33P | (msel << 16) | (scfw_flags << 24);
+			} else {
+				meta = 0x8;
+				core = 0xD;
+			}
+		} else if (soc == ULP) {
 			core = CORE_ULP_CM33;
 			meta = 0;
 		} else {
@@ -563,9 +597,6 @@ void set_image_array_entry(flash_header_v3_t *container, soc_type_t soc,
 				fprintf(stderr, "Error: invalid m4 core id: %" PRIi64 "\n", core);
 				exit(EXIT_FAILURE);
 			}
-		}
-		if (soc == IMX9) {
-			meta = CORE_IMX95_M33P | (msel << 16) | (scfw_flags << 24);
 		}
 		img->hab_flags |= IMG_TYPE_EXEC;
 		img->hab_flags |= core << BOOT_IMG_FLAGS_CORE_SHIFT;
@@ -666,11 +697,19 @@ void set_container(flash_header_v3_t *container,  uint16_t sw_version,
 	printf("flags: 0x%x\n", container->flags);
 }
 
-int get_container_image_start_pos(image_t *image_stack, uint32_t align, soc_type_t soc, uint32_t *scu_cont_hdr_off)
+int get_container_image_start_pos(image_t *image_stack, uint32_t align,
+				  soc_type_t soc, uint8_t cntr_version,
+				  uint32_t *scu_cont_hdr_off)
 {
 	image_t *img_sp = image_stack;
-    /*8K total container header*/
-	int file_off = CONTAINER_IMAGE_ARRAY_START_OFFSET,  ofd = -1;
+	int ofd = -1;
+	/*
+	 * 8K total container header for legacy container, for version 2
+	 * container, the total container header is 0x4000 * 3 = 0xC000.
+	 */
+	int file_off = cntr_version == 0x2 ? 0xC000 : CONTAINER_IMAGE_ARRAY_START_OFFSET;
+	int container_align = cntr_version == 0x2 ? 0x4000 : CONTAINER_ALIGNMENT;
+
 	flash_header_v3_t header;
 
 
@@ -684,7 +723,7 @@ int get_container_image_start_pos(image_t *image_stack, uint32_t align, soc_type
 					break;
 				}
 
-				if(lseek(ofd,  i * CONTAINER_ALIGNMENT, SEEK_SET) < 0) {
+				if(lseek(ofd,  i * container_align, SEEK_SET) < 0) {
 					printf("Failure Skip SECO header \n");
 						exit(EXIT_FAILURE);
 				}
@@ -696,7 +735,7 @@ int get_container_image_start_pos(image_t *image_stack, uint32_t align, soc_type
 
 				close(ofd);
 
-				if (header.tag != IVT_HEADER_TAG_B0) {
+				if ((header.tag != IVT_HEADER_TAG_B0) && (header.tag != 0x82)) {
 					printf("header tag missmatched %x\n", header.tag);
 					break;
 				} else if (header.num_images == 0) {
@@ -704,12 +743,13 @@ int get_container_image_start_pos(image_t *image_stack, uint32_t align, soc_type
 					break;
 				} else {
 					file_off = header.img[header.num_images - 1].offset + header.img[header.num_images - 1].size;
-					*scu_cont_hdr_off = i * CONTAINER_ALIGNMENT + ALIGN(header.length, CONTAINER_ALIGNMENT);
-					file_off += i * CONTAINER_ALIGNMENT;
+					*scu_cont_hdr_off = i * container_align + ALIGN(header.length, container_align);
+					file_off += i * container_align;
 					file_off = ALIGN(file_off, align);
 				}
 
 				i++;
+				printf("%s i is %d, %x, %x\n\n\n", img_sp->filename, i, header.flags, file_off);
 			} while (true);
 		}
 
@@ -722,7 +762,7 @@ int get_container_image_start_pos(image_t *image_stack, uint32_t align, soc_type
 
 int build_container_qx_qm_b0(soc_type_t soc, uint32_t sector_size, uint32_t ivt_offset, char *out_file,
 				bool emmc_fastboot, image_t *image_stack, bool dcd_skip, uint8_t fuse_version,
-				uint16_t sw_version, uint32_t cntr_flags, char *images_hash)
+				uint16_t sw_version, uint8_t cntr_version, uint32_t cntr_flags, char *images_hash)
 {
 	int file_off, ofd = -1;
 	unsigned int dcd_len = 0;
@@ -756,12 +796,13 @@ int build_container_qx_qm_b0(soc_type_t soc, uint32_t sector_size, uint32_t ivt_
 	else if (soc == IMX9)
 		fprintf(stdout, "Platform:\ti.MX9\n");
 
-	set_imx_hdr_v3(&imx_header, dcd_len, ivt_offset, INITIAL_LOAD_ADDR_SCU_ROM, 0);
-	set_imx_hdr_v3(&imx_header, 0, ivt_offset, INITIAL_LOAD_ADDR_AP_ROM, 1);
+	set_imx_hdr_v3(&imx_header, dcd_len, ivt_offset, INITIAL_LOAD_ADDR_SCU_ROM, 0, cntr_version);
+	set_imx_hdr_v3(&imx_header, 0, ivt_offset, INITIAL_LOAD_ADDR_AP_ROM, 1, cntr_version);
 
 	printf("ivt_offset:\t%d\n", ivt_offset);
 
-	file_off = get_container_image_start_pos(image_stack, sector_size, soc, &file_padding);
+	/*next image data space offset */
+	file_off = get_container_image_start_pos(image_stack, sector_size, soc, cntr_version, &file_padding);
 	printf("container image offset (aligned):%x\n", file_off);
 
 	printf("csf_off \t0x%x\n", ivt_offset + file_off);
@@ -787,6 +828,7 @@ int build_container_qx_qm_b0(soc_type_t soc, uint32_t sector_size, uint32_t ivt_
 			}
 			check_file(&sbuf, img_sp->filename);
 			tmp_filename = img_sp->filename;
+			/* the image offset is based on current header */
 			set_image_array_entry(&imx_header.fhdr[container],
 						soc,
 						img_sp,
@@ -802,6 +844,7 @@ int build_container_qx_qm_b0(soc_type_t soc, uint32_t sector_size, uint32_t ivt_
 			break;
 
 		case DUMMY_V2X:
+		case DUMMY_DDR:
 			if (container < 0) {
 				fprintf(stderr, "No container found\n");
 				exit(EXIT_FAILURE);
@@ -862,7 +905,7 @@ int build_container_qx_qm_b0(soc_type_t soc, uint32_t sector_size, uint32_t ivt_
 		case NEW_CONTAINER:
 			container++;
 			set_container(&imx_header.fhdr[container], sw_version,
-					CONTAINER_ALIGNMENT,
+					cntr_version ? 0x4000 : CONTAINER_ALIGNMENT,
 					cntr_flags,
 					fuse_version);
 			cont_img_count = 0; /* reset img count when moving to new container */

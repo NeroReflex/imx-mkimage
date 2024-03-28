@@ -55,7 +55,8 @@ typedef enum option_type {
     FCB,
     OEI,
     MSEL,
-    HOLD
+    HOLD,
+    DUMMY_DDR,
 } option_type_t;
 
 
@@ -131,6 +132,9 @@ typedef struct {
 
 /* TODO_IMX95: ROM still not support this, waiting check */
 #define CORE_M7_0       0xB
+#define CORE_M7_1	0xC
+#define CORE_M33S	0xD
+#define CORE_IMX943_M33S 8U
 #define CORE_IMX95_M33P        0U
 #define CORE_IMX95_M7P         1U
 #define CORE_IMX95_A55C0       2U
@@ -167,6 +171,7 @@ typedef struct {
 #define IMG_TYPE_PRIM_V2X       0x0B   /* Primary V2X FW image */
 #define IMG_TYPE_SEC_V2X        0x0C   /* Secondary V2X FW image*/
 #define IMG_TYPE_V2X_ROM        0x0D   /* V2X ROM Patch image */
+#define IMG_TYPE_DDR_DUMMY      0x0D   /* DDR training data dummy entry */
 #define IMG_TYPE_V2X_DUMMY      0x0E   /* V2X Dummy image */
 
 #define IMG_TYPE_SHIFT   0
@@ -368,6 +373,6 @@ int build_container_qx(uint32_t sector_size, uint32_t ivt_offset, char * out_fil
 
 int build_container_qx_qm_b0(soc_type_t soc, uint32_t sector_size, uint32_t ivt_offset, char * out_file,
                 bool emmc_fastboot, image_t* image_stack, bool dcd_skip, uint8_t fuse_version,
-                uint16_t sw_version, uint32_t cntr_flags, char *images_hash);
+                uint16_t sw_version, uint8_t cntr_version, uint32_t cntr_flags, char *images_hash);
 
 int parse_container_hdrs_qx_qm_b0(char *ifname, bool extract, soc_type_t soc, off_t file_off);

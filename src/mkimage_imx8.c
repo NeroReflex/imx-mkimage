@@ -608,6 +608,7 @@ int main(int argc, char **argv)
 
 	uint8_t  fuse_version = 0;
 	uint16_t sw_version   = 0;
+	uint8_t  cntr_version = 0;
 	uint32_t cntr_flags   = CONTAINER_FLAGS_DEFAULT;
 
 	char     *images_hash = NULL;
@@ -649,7 +650,9 @@ int main(int argc, char **argv)
 		{"oei", required_argument, NULL, 'E'},
 		{"split", required_argument, NULL, 'S'},
 		{"hold", required_argument, NULL, 'H'},
+		{"cntr_version", required_argument, NULL, 'V'},
 		{"cntr_flags", required_argument, NULL, 'F'},
+		{"ddr_dummy", no_argument, NULL, 'Y'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -829,6 +832,9 @@ int main(int argc, char **argv)
 					fprintf(stderr, "\n-m[4,33] option require FOUR arguments: filename, core: 0/1, entry address in hex, load address in hex(optional)\n\n");
 					exit(EXIT_FAILURE);
 				}
+				break;
+			case 'Y':
+				param_stack[p_idx++].option = DUMMY_DDR;
 				break;
 			case 'E':
 				if (soc != IMX9) {
@@ -1064,6 +1070,10 @@ int main(int argc, char **argv)
 				ifname = optarg;
 				split = true;
 				break;
+			case 'V':
+				cntr_version = (uint8_t) (strtoll(optarg, NULL, 0) & 0xFF);
+				fprintf(stdout, "Container header version is %d\n", cntr_version);
+				break;
 			case 'F':
 				cntr_flags = (uint32_t) (strtoll(optarg, NULL, 0) & 0xFFFFFFFF);
 				fprintf(stdout, "Container header flags: 0x%08X\n", cntr_flags);
@@ -1126,7 +1136,7 @@ int main(int argc, char **argv)
 			if (rev == B0)
 				build_container_qx_qm_b0(soc, sector_size, ivt_offset, ofname,
 					emmc_fastboot, (image_t *) param_stack, dcd_skip,
-					fuse_version, sw_version, cntr_flags, images_hash);
+					fuse_version, sw_version, 0, cntr_flags, images_hash);
 			else
 				fprintf(stderr, " unsupported SOC revision");
 			break;
@@ -1138,7 +1148,7 @@ int main(int argc, char **argv)
 			if (rev == B0)
 				build_container_qx_qm_b0(soc, sector_size, ivt_offset, ofname,
 					emmc_fastboot, (image_t *) param_stack, dcd_skip,
-					fuse_version, sw_version, cntr_flags, images_hash);
+					fuse_version, sw_version, 0, cntr_flags, images_hash);
 			else
 				fprintf(stderr, " unsupported SOC revision");
 			break;
@@ -1147,7 +1157,7 @@ int main(int argc, char **argv)
 		case IMX9:
 			build_container_qx_qm_b0(soc, sector_size, ivt_offset, ofname,
 				emmc_fastboot, (image_t *) param_stack, dcd_skip,
-				fuse_version, sw_version, cntr_flags, images_hash);
+				fuse_version, sw_version, cntr_version, cntr_flags, images_hash);
 			break;
 		default:
 			fprintf(stderr, " unrecognized SOC defined");
