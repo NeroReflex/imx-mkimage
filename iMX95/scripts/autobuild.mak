@@ -40,7 +40,7 @@ nightly_mx95verdin: DTB = imx95-verdin-evk
 nightly_mx95verdin: CPU = imx95
 nightly_mx95verdin: DDR = lpddr5
 nightly_mx95verdin: DDR_FW_VER = $(LPDDR_FW_VERSION)
-nightly_mx95verdin: M7_FILE = $(DTB)_m7_TCM_rpmsg_lite_str_echo_rtos.bin
+nightly_mx95verdin: M7_FILE = $(DTB)_m7_TCM_power_mode_switch.bin
 nightly_mx95verdin: core_files
 
 core_files:
