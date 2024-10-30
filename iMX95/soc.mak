@@ -38,6 +38,7 @@ LPDDR_TYPE ?= lpddr5
 LPDDR_FUNC ?= train
 LPDDR_FW_VERSION ?= _v202311
 SPL_A55_IMG ?= u-boot-spl-ddr-v2.bin
+AP_IMG ?= ap.bin
 KERNEL_DTB ?= imx95-19x19-evk.dtb   # Used by kernel authentication
 KERNEL_DTB_ADDR ?= 0x93000000
 KERNEL_ADDR ?= 0x90400000
@@ -370,6 +371,12 @@ flash_all_no_ahabfw: $(MKIMG) $(MCU_IMG) $(M7_IMG) u-boot-atf-container.img $(SP
 		   -m7 $(M7_IMG) 0 $(M7_TCM_ADDR) $(M7_TCM_ADDR_ALIAS)  \
 		   -ap $(SPL_A55_IMG) a55 $(SPL_LOAD_ADDR_M33_VIEW) -out flash.bin
 	$(call append_container,u-boot-atf-container.img,1)
+
+flash_all_ap: $(MKIMG) $(AHAB_IMG) $(MCU_IMG) $(M7_IMG) $(AP_IMG) $(OEI_IMG_M33)
+	./$(MKIMG) -soc IMX9 -append $(AHAB_IMG) -c $(OEI_OPT_M33) -msel $(MSEL) \
+		   -m33 $(MCU_IMG) 0 $(MCU_TCM_ADDR) \
+		   -m7 $(M7_IMG) 0 $(M7_TCM_ADDR) $(M7_TCM_ADDR_ALIAS)  \
+		   -ap $(AP_IMG) a55 $(SPL_LOAD_ADDR_M33_VIEW) $(V2X_DUMMY) -out flash.bin
 
 flash_sentinel: $(MKIMG) ahabfw.bin
 	./$(MKIMG) -soc IMX9 -c -sentinel ahabfw.bin -out flash.bin
