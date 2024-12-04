@@ -1540,7 +1540,7 @@ int extract_container_images(flash_header_v3_t *container_hdr, char *ifname, int
 int parse_container_hdrs_qx_qm_b0(char *ifname, bool extract, soc_type_t soc, off_t file_off)
 {
 	int ifd; /* container file descriptor */
-	int max_containers = (soc == DXL) ? 3 : 2;
+	int max_containers = (soc == DXL || soc == IMX9) ? 3 : 2;
 	int cntr_num = 0; /* number of containers in binary */
 	int img_array_entries = 0; /* number of images in container */
 	ssize_t rd_err;
