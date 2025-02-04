@@ -17,8 +17,8 @@ nightly_evk19lp5: nightly_mx943evk19lp5
 nightly_evk19lp4: nightly_mx943evk19lp4
 nightly_evk15: nightly_mx943evk15
 nightly_mx943evk19lp5: nightly_mx943-19x19-lpddr5-evk
-nightly_mx943evk19lp4: nightly_mx943-19x19-lpddr4x-evk
-nightly_mx943evk15: nightly_mx943-15x15-lpddr4x-evk
+nightly_mx943evk19lp4: nightly_mx943-19x19-lpddr4-evk
+nightly_mx943evk15: nightly_mx943-15x15-lpddr4-evk
 
 # MX943 19x19 LPDDR5 EVK
 nightly_mx943-19x19-lpddr5-evk: BOARD = $(CPU)-19x19-$(DDR)-evk
@@ -30,22 +30,22 @@ nightly_mx943-19x19-lpddr5-evk: M7_FILE = $(DTB)_m7_TCM_power_mode_switch.bin
 nightly_mx943-19x19-lpddr5-evk: core_files
 
 # MX943 19x19 LPDDR4X EVK
-nightly_mx943-19x19-lpddr4x-evk: BOARD = $(CPU)-19x19-$(DDR)-evk
-nightly_mx943-19x19-lpddr4x-evk: DTB = imx943-19x19-evk
-nightly_mx943-19x19-lpddr4x-evk: CPU = imx943
-nightly_mx943-19x19-lpddr4x-evk: DDR = lpddr4x
-nightly_mx943-19x19-lpddr4x-evk: DDR_FW_VER = $(LPDDR_FW_VERSION)
-nightly_mx943-19x19-lpddr4x-evk: M7_FILE = $(DTB)_m7_TCM_power_mode_switch.bin
-nightly_mx943-19x19-lpddr4x-evk: core_files
+nightly_mx943-19x19-lpddr4-evk: BOARD = $(CPU)-19x19-lpddr4-evk
+nightly_mx943-19x19-lpddr4-evk: DTB = imx943-19x19-evk
+nightly_mx943-19x19-lpddr4-evk: CPU = imx943
+nightly_mx943-19x19-lpddr4-evk: DDR = lpddr4x
+nightly_mx943-19x19-lpddr4-evk: DDR_FW_VER = $(LPDDR_FW_VERSION)
+nightly_mx943-19x19-lpddr4-evk: M7_FILE = $(DTB)_m7_TCM_power_mode_switch.bin
+nightly_mx943-19x19-lpddr4-evk: core_files
 
 # MX943 15x15 LPDDR4X EVK
-nightly_mx943-15x15-lpddr4x-evk: BOARD = $(CPU)-15x15-$(DDR)-evk
-nightly_mx943-15x15-lpddr4x-evk: DTB = imx943-15x15-evk
-nightly_mx943-15x15-lpddr4x-evk: CPU = imx943
-nightly_mx943-15x15-lpddr4x-evk: DDR = lpddr4x
-nightly_mx943-15x15-lpddr4x-evk: DDR_FW_VER = $(LPDDR_FW_VERSION)
-nightly_mx943-15x15-lpddr4x-evk: M7_FILE = $(DTB)_m7_TCM_power_mode_switch.bin
-nightly_mx943-15x15-lpddr4x-evk: core_files
+nightly_mx943-15x15-lpddr4-evk: BOARD = $(CPU)-15x15-lpddr4-evk
+nightly_mx943-15x15-lpddr4-evk: DTB = imx943-15x15-evk
+nightly_mx943-15x15-lpddr4-evk: CPU = imx943
+nightly_mx943-15x15-lpddr4-evk: DDR = lpddr4x
+nightly_mx943-15x15-lpddr4-evk: DDR_FW_VER = $(LPDDR_FW_VERSION)
+nightly_mx943-15x15-lpddr4-evk: M7_FILE = $(DTB)_m7_TCM_power_mode_switch.bin
+nightly_mx943-15x15-lpddr4-evk: core_files
 
 core_files:
 	$(AT)rm -rf boot
