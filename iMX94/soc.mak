@@ -248,7 +248,7 @@ flash_a55_xspi: $(MKIMG) $(AHAB_IMG) $(MCU_IMG) fcb.bin u-boot-atf-container.img
 
 ## AHAB_IMG shall include both ELE and V2X containers ##
 flash_a55_xspi_oem_fastboot: $(MKIMG) $(AHAB_IMG) $(MCU_IMG) $(SPL_A55_IMG) $(OEI_IMG_M33) fcb.bin u-boot-atf-container.img
-	./$(MKIMG) -soc IMX9 -cntr_version 2 -u 1 -cntr_flags 0x30010 -images_hash sha256 \
+	./$(MKIMG) -soc IMX9 -cntr_version 2 -u 1 -cntr_flags 0x30010 \
 		   -append $(AHAB_IMG) -c $(OEI_OPT_M33) -msel $(MSEL) \
 		   -m33 $(MCU_IMG) 0 $(MCU_TCM_ADDR) \
 		   -ap $(SPL_A55_IMG) a55 $(SPL_LOAD_ADDR_M33_VIEW) $(V2X_DUMMY) -out flash.bin
@@ -332,7 +332,7 @@ flash_m70_ddr_no_ahabfw_xspi: $(MKIMG) $(MCU_IMG) $(M70_IMG) $(OEI_IMG_M33) fcb.
 
 ## AHAB_IMG shall include both ELE and V2X containers ##
 flash_m70_ddr_xspi_oem_fastboot: $(MKIMG) $(AHAB_IMG) $(MCU_IMG) $(M70_IMG) $(OEI_IMG_M33) fcb.bin
-	./$(MKIMG) -soc IMX9 -cntr_version 2 -u 1 -cntr_flags 0x30010 -images_hash sha256 -dev flexspi \
+	./$(MKIMG) -soc IMX9 -cntr_version 2 -u 1 -cntr_flags 0x30010 -dev flexspi \
 		   -append $(AHAB_IMG) -c $(OEI_OPT_M33) -msel $(MSEL) \
 		   -m33 $(MCU_IMG) 0 $(MCU_TCM_ADDR) \
 		   -m7 $(M70_IMG) 0 $(M70_DDR_ADDR) $(M70_DDR_ADDR) $(V2X_DUMMY) -out flash.bin
