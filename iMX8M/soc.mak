@@ -27,6 +27,7 @@ DEK_BLOB_LOAD_ADDR = 0x40400000
 dtbs ?=
 
 ifeq ($(SOC),iMX8MM)
+$(error $(SOC))
 PLAT = imx8mm
 HDMI = no
 SPL_LOAD_ADDR = 0x7E1000
@@ -52,6 +53,7 @@ QSPI_PACKER = ../scripts/fspi_packer.sh
 VERSION = v2
 DDR_FW_VERSION = _201810
 else ifeq ($(SOC),iMX8MP)
+$(error debug)
 PLAT = imx8mp
 HDMI = no
 SPL_LOAD_ADDR = 0x920000
