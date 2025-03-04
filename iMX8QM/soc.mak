@@ -54,7 +54,7 @@ u-boot-atf.itb: u-boot-hash.bin bl31.bin
 	./$(PAD_IMAGE) bl31.bin
 	./$(PAD_IMAGE) u-boot-hash.bin
 	./mkimage_fit_atf.sh > u-boot.its;
-	./mkimage_uboot -E -p 0x3000 -f u-boot.its u-boot-atf.itb;
+	$(MKIMAGE) -E -p 0x3000 -f u-boot.its u-boot-atf.itb;
 	@rm -f u-boot.its
 
 u-boot-atf-container.img: bl31.bin u-boot-hash.bin

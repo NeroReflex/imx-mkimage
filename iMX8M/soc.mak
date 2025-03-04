@@ -162,7 +162,7 @@ u-boot.itb: $(dtb)
 	./$(PAD_IMAGE) bl31.bin
 	./$(PAD_IMAGE) u-boot-nodtb.bin $(dtb)
 	DEK_BLOB_LOAD_ADDR=$(DEK_BLOB_LOAD_ADDR) TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) ./mkimage_fit_atf.sh $(dtb) > u-boot.its
-	./mkimage_uboot -E -p 0x3000 -f u-boot.its u-boot.itb
+	$(MKIMAGE) -E -p 0x3000 -f u-boot.its u-boot.itb
 	@rm -f u-boot.its $(dtb)
 
 dtbs_lpddr4_ddr4_evk ?= $(dtbs)
@@ -171,7 +171,7 @@ u-boot-lpddr4-ddr4-evk.itb: $(dtbs_lpddr4_ddr4_evk)
 	./$(PAD_IMAGE) bl31.bin
 	./$(PAD_IMAGE) u-boot-nodtb.bin $(dtbs_lpddr4_ddr4_evk)
 	DEK_BLOB_LOAD_ADDR=$(DEK_BLOB_LOAD_ADDR) TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) ./mkimage_fit_atf.sh $(dtbs_lpddr4_ddr4_evk) > u-boot-lpddr4-ddr4-evk.its
-	./mkimage_uboot -E -p 0x3000 -f u-boot-lpddr4-ddr4-evk.its u-boot-lpddr4-ddr4-evk.itb
+	$(MKIMAGE) -E -p 0x3000 -f u-boot-lpddr4-ddr4-evk.its u-boot-lpddr4-ddr4-evk.itb
 	@rm -f $(dtbs_lpddr4_ddr4_evk)
 
 
@@ -184,7 +184,7 @@ u-boot-ddr3l.itb: $(dtb_ddr3l)
 	./$(PAD_IMAGE) bl31.bin
 	./$(PAD_IMAGE) u-boot-nodtb.bin $(dtb_ddr3l)
 	DEK_BLOB_LOAD_ADDR=$(DEK_BLOB_LOAD_ADDR) TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) ./mkimage_fit_atf.sh $(dtb_ddr3l) > u-boot-ddr3l.its
-	./mkimage_uboot -E -p 0x3000 -f u-boot-ddr3l.its u-boot-ddr3l.itb
+	$(MKIMAGE) -E -p 0x3000 -f u-boot-ddr3l.its u-boot-ddr3l.itb
 	@rm -f u-boot.its $(dtb_ddr3l)
 
 dtb_ddr3l_evk = evkddr3l.dtb
@@ -196,7 +196,7 @@ u-boot-ddr3l-evk.itb: $(dtb_ddr3l_evk)
 	./$(PAD_IMAGE) bl31.bin
 	./$(PAD_IMAGE) u-boot-nodtb.bin $(dtb_ddr3l_evk)
 	DEK_BLOB_LOAD_ADDR=$(DEK_BLOB_LOAD_ADDR) TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) ./mkimage_fit_atf.sh $(dtb_ddr3l_evk) > u-boot-ddr3l-evk.its
-	./mkimage_uboot -E -p 0x3000 -f u-boot-ddr3l-evk.its u-boot-ddr3l-evk.itb
+	$(MKIMAGE) -E -p 0x3000 -f u-boot-ddr3l-evk.its u-boot-ddr3l-evk.itb
 	@rm -f u-boot.its $(dtb_ddr3l_evk)
 
 dtb_ddr4 = valddr4.dtb
@@ -208,7 +208,7 @@ u-boot-ddr4.itb: $(dtb_ddr4)
 	./$(PAD_IMAGE) bl31.bin
 	./$(PAD_IMAGE) u-boot-nodtb.bin $(dtb_ddr4)
 	DEK_BLOB_LOAD_ADDR=$(DEK_BLOB_LOAD_ADDR) TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) ./mkimage_fit_atf.sh $(dtb_ddr4) > u-boot-ddr4.its
-	./mkimage_uboot -E -p 0x3000 -f u-boot-ddr4.its u-boot-ddr4.itb
+	$(MKIMAGE) -E -p 0x3000 -f u-boot-ddr4.its u-boot-ddr4.itb
 	@rm -f u-boot.its $(dtb_ddr4)
 
 dtb_ddr4_evk = evkddr4.dtb
@@ -220,7 +220,7 @@ u-boot-ddr4-evk.itb: $(dtb_ddr4_evk)
 	./$(PAD_IMAGE) bl31.bin
 	./$(PAD_IMAGE) u-boot-nodtb.bin $(dtb_ddr4_evk)
 	DEK_BLOB_LOAD_ADDR=$(DEK_BLOB_LOAD_ADDR) TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) ./mkimage_fit_atf.sh $(dtb_ddr4_evk) > u-boot-ddr4-evk.its
-	./mkimage_uboot -E -p 0x3000 -f u-boot-ddr4-evk.its u-boot-ddr4-evk.itb
+	$(MKIMAGE) -E -p 0x3000 -f u-boot-ddr4-evk.its u-boot-ddr4-evk.itb
 	@rm -f u-boot.its $(dtb_ddr4_evk)
 
 ifeq ($(HDMI),yes)

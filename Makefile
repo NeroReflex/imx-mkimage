@@ -6,6 +6,8 @@ INCLUDE += $(CURR_DIR)/src
 
 SRCS = src/imx8qxb0.c src/mkimage_imx8.c
 
+MKIMAGE ?= ./mkimage_uboot
+
 ifneq ($(findstring iMX8M,$(SOC)),)
 SOC_DIR = iMX8M
 endif
